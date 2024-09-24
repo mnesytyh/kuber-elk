@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: elk
+spec:
+  serviceName: elasticsearch
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: elasticsearch
+        image: elasticsearch:7.17.24
+        resources:
+          requests:
+            cpu: 100m
+            memory: 1Gi
+          limits:
+            memory: 2Gi
+        volumeMounts:
+        - name: data
+          mountPath: /usr/share/elasticsearch/data
+        env:
+          - name: SERVICENAME
+            value: elasticsearch
+          - name: discovery.type
+            value: single-node
+          - name: ELASTIC_PASSWORD
+            value: "P@ssw0rd"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: elk-pvc
+  serviceName: elasticsearch
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  revisionHistoryLimit: 10
+  minReadySeconds: 10
